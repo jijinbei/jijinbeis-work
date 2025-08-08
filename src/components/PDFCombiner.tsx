@@ -5,10 +5,36 @@ export function PDFCombiner() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [combinationType, setCombinationType] = useState<'2in1' | '8in1'>('2in1');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setSelectedFiles(files);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(event.dataTransfer.files).filter(
+      file => file.type === 'application/pdf'
+    );
+    
+    if (files.length > 0) {
+      setSelectedFiles(files);
+    } else {
+      alert('PDFファイルのみ選択してください');
+    }
   };
 
   const combineSlides = async () => {
@@ -148,7 +174,16 @@ export function PDFCombiner() {
       
       <div className="space-y-6">
         {/* ファイル選択 */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+        <div 
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
+            isDragOver 
+              ? 'border-blue-500 bg-blue-50' 
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <input
             type="file"
             accept=".pdf"
@@ -161,9 +196,16 @@ export function PDFCombiner() {
             htmlFor="pdf-upload"
             className="cursor-pointer flex flex-col items-center"
           >
-            <div className="text-4xl mb-2">📁</div>
+            <div className={`text-4xl mb-2 transition-all duration-300 ${
+              isDragOver ? 'transform scale-110' : ''
+            }`}>
+              {isDragOver ? '📥' : '📁'}
+            </div>
             <div className="text-lg font-medium text-gray-700">
-              PDFファイルを選択してください
+              {isDragOver 
+                ? 'ここにPDFファイルをドロップしてください' 
+                : 'PDFファイルを選択またはドラッグ&ドロップしてください'
+              }
             </div>
             <div className="text-sm text-gray-500 mt-1">
               複数のファイルを選択可能です
@@ -247,6 +289,7 @@ export function PDFCombiner() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
           <h4 className="font-semibold text-yellow-800 mb-2">💡 使い方:</h4>
           <ul className="space-y-1 text-yellow-700">
+            <li>• PDFファイルをクリックして選択、またはドラッグ&ドロップしてください</li>
             <li>• 複数のPDFファイルを選択してください</li>
             <li>• 2-in-1: 縦向きA4に2ページを上下に配置（読みやすい）</li>
             <li>• 8-in-1: A4に8ページを2×4で配置（最大用紙節約）</li>
